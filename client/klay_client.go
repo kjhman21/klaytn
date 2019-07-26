@@ -28,6 +28,7 @@ import (
 	"github.com/klaytn/klaytn"
 	"github.com/klaytn/klaytn/api"
 	"github.com/klaytn/klaytn/blockchain/types"
+	"github.com/klaytn/klaytn/blockchain/types/account"
 	"github.com/klaytn/klaytn/common"
 	"github.com/klaytn/klaytn/common/hexutil"
 	"github.com/klaytn/klaytn/networks/rpc"
@@ -235,6 +236,15 @@ func (ec *Client) TransactionReceipt(ctx context.Context, txHash common.Hash) (*
 		}
 	}
 	return r, err
+}
+
+// TransactionReceiptRpcOutput returns the receipt of a transaction by transaction hash as a rpc output.
+func (ec *Client) TransactionReceiptRpcOutput(ctx context.Context, txHash common.Hash) (r map[string]interface{}, err error) {
+	err = ec.c.CallContext(ctx, &r, "klay_getTransactionReceipt", txHash)
+	if err == nil && r == nil {
+		return nil, klaytn.NotFound
+	}
+	return
 }
 
 func toBlockNumArg(number *big.Int) string {
@@ -476,6 +486,14 @@ func (ec *Client) SendRawTransaction(ctx context.Context, tx *types.Transaction)
 	}
 	hash := common.BytesToHash(hex)
 	return hash, nil
+}
+
+func (ec *Client) GetAccount(ctx context.Context, addr common.Address) (account.Account, error) {
+	acc := account.NewAccountSerializer()
+	if err := ec.c.CallContext(ctx, acc, "klay_getAccount", addr.String(), toBlockNumArg(nil)); err != nil {
+		return nil, err
+	}
+	return acc.GetAccount(), nil
 }
 
 // SendUnsignedTransaction injects a unsigned transaction into the pending pool for execution.

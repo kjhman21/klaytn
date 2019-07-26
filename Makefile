@@ -21,6 +21,11 @@ kpn:
 	@echo "Done building."
 	@echo "Run \"$(GOBIN)/kpn\" to launch Proxy Node."
 
+poc:
+	build/env.sh go run build/ci.go install ./cmd/poc
+	@echo "Done building."
+	@echo "Run \"$(GOBIN)/poc\" to launch Endpoint Node."
+
 ken:
 	build/env.sh go run build/ci.go install ./cmd/ken
 	@echo "Done building."
