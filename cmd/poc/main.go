@@ -70,14 +70,17 @@ func main() {
 		panic(err)
 	}
 
+	ctx := context.Background()
 	cli, err := client.Dial(getEndpoint())
 	if err != nil {
 		panic(err)
 	}
 
-	ctx := context.Background()
+	chainId, err := cli.ChainID(ctx)
+	if err != nil { panic(err) }
+
 	returnAddr := common.HexToAddress(returnAddrStr)
-	signer := types.NewEIP155Signer(big.NewInt(8217))
+	signer := types.NewEIP155Signer(chainId)
 	gasPrice := new(big.Int).SetUint64(25 *params.Ston)
 
 	PoCAccount := &TestRoleBasedAccountType{
@@ -235,7 +238,7 @@ func main() {
 	}
 
 	{
-		amount := new(big.Int).SetUint64(10000)
+		amount := new(big.Int).Div(new(big.Int).SetUint64(9 * params.KLAY), big.NewInt(10))
 		values := map[types.TxValueKeyType]interface{}{
 			types.TxValueKeyNonce:    PoCAccount.Nonce,
 			types.TxValueKeyFrom:     PoCAccount.Addr,
