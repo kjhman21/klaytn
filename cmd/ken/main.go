@@ -21,6 +21,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/klaytn/klaytn/api/debug"
 	"github.com/klaytn/klaytn/cmd/utils"
@@ -29,7 +30,9 @@ import (
 	"github.com/klaytn/klaytn/log"
 	"gopkg.in/urfave/cli.v1"
 	"os"
+	"path/filepath"
 	"sort"
+	"syscall"
 )
 
 var (
@@ -252,12 +255,79 @@ func init() {
 	}
 }
 
-func main() {
+func startDaemon() {
+	files := []*os.File{
+		os.Stdin,
+		os.Stdout,
+		os.Stderr,
+	}
+
+	environment := os.Environ()
+
+	execName, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+
+	execDir := filepath.Dir(execName)
+
+	args := []string{execName, "-service"}
+	args = append(args, os.Args[1:]...)
+
+	for {
+		p, err := os.StartProcess(execName, args, &os.ProcAttr{
+			Dir:   execDir,
+			Env:   environment,
+			Files: files,
+			Sys:   &syscall.SysProcAttr{},
+		})
+
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Printf("forked child %v.\n", p.Pid)
+
+		p.Wait()
+	}
+
+}
+
+func startService() {
 	// Set NodeTypeFlag to en
 	utils.NodeTypeFlag.Value = "en"
+
+	fmt.Println("starting KEN service...")
 
 	if err := app.Run(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+}
+
+func main() {
+	service := false
+
+	serviceArgs := []string{}
+	daemonArgs := []string{}
+	for _, a := range os.Args {
+		if a == "-service" {
+			daemonArgs = append(daemonArgs, a)
+		} else {
+			serviceArgs = append(serviceArgs, a)
+		}
+	}
+
+	var CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	CommandLine.BoolVar(&service, "service", false, "start a service instead of starting a daemon")
+	if err := CommandLine.Parse(daemonArgs); err != nil {
+		panic(err)
+	}
+
+	if service {
+		os.Args = serviceArgs
+		startService()
+	} else {
+		startDaemon()
 	}
 }
