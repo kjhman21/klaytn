@@ -651,12 +651,13 @@ func (api *PrivateDebugAPI) standardTraceBlockToFile(ctx context.Context, block 
 // computeStateDB retrieves the state database associated with a certain block.
 // A number of blocks are attempted to be reexecuted to generate the desired state.
 func (api *PrivateDebugAPI) computeStateDB(block *types.Block, reexec uint64) (*state.StateDB, error) {
+	statedb, err := api.cn.blockchain.StateAt(block.Root())
+	if err == nil {
+		return statedb, nil
+	}
 	// try to reexec blocks until we find a state or reach our limit
 	origin := block.NumberU64()
 	database := state.NewDatabaseWithCache(api.cn.ChainDB(), 16, 0)
-
-	var statedb *state.StateDB
-	var err error
 
 	for i := uint64(0); i < reexec; i++ {
 		block = api.cn.blockchain.GetBlock(block.ParentHash(), block.NumberU64()-1)
