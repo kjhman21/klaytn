@@ -493,6 +493,7 @@ func (self *StateDB) getStateObject(addr common.Address) *stateObject {
 		if obj.deleted {
 			return nil
 		}
+		logger.Info("returning state object from live object pool", "addr", addr.Hex())
 		return obj
 	}
 	// Track the amount of time wasted on loading the object from the database
