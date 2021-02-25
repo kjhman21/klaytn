@@ -1671,10 +1671,6 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 			parent = chain[i-1]
 		}
 
-		if parent.NumberU64() == 51866894 {
-			panic("block number is 51866894!!!")
-		}
-
 		stateDB, err := bc.StateAt(parent.Root())
 		if err != nil {
 			return i, events, coalescedLogs, err

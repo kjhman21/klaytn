@@ -21,6 +21,7 @@
 package blockchain
 
 import (
+	"github.com/klaytn/klaytn/common"
 	"time"
 
 	"github.com/klaytn/klaytn/blockchain/state"
@@ -82,6 +83,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	// Iterate over and process the individual transactions
 	for i, tx := range block.Transactions() {
 		statedb.Prepare(tx.Hash(), block.Hash(), i)
+		logger.Info("ApplyTransaction", "goid", common.GoId(), "blockNum", block.NumberU64(), "transactionIdx", i)
 		receipt, _, internalTxTrace, err := p.bc.ApplyTransaction(p.config, &author, statedb, header, tx, usedGas, &cfg)
 		if err != nil {
 			return nil, nil, 0, nil, processStats, err
@@ -89,6 +91,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		receipts = append(receipts, receipt)
 		allLogs = append(allLogs, receipt.Logs...)
 		internalTxTraces = append(internalTxTraces, internalTxTrace)
+		panic("panic!!")
 	}
 	processStats.AfterApplyTxs = time.Now()
 
