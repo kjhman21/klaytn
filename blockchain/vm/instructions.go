@@ -620,8 +620,9 @@ func opMstore8(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack *
 
 func opSload(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
 	loc := stack.Peek()
-	logger.Info("Executing SLoad", "goid", common.GoId(), "loc", loc.Text(16), "val", val.Hex(), "prefetching", evm.vmConfig.Prefetching)
+	logger.Info("Executing SLoad", "goid", common.GoId(), "loc", loc.Text(16), "prefetching", evm.vmConfig.Prefetching)
 	val := evm.StateDB.GetState(contract.Address(), common.BigToHash(loc))
+	logger.Info("Executing SLoad -- Done", "goid", common.GoId(), "loc", loc.Text(16), "prefetching", evm.vmConfig.Prefetching, "val", val.Hex())
 	loc.SetBytes(val.Bytes())
 	return nil, nil
 }
