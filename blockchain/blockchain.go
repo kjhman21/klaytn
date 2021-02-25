@@ -1668,11 +1668,8 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 			parent = chain[i-1]
 		}
 
-		if parent.NumberU64() == 51792943 {
-			panic("block number is 51792943!!!")
-		}
-		if block.Transactions().Len() >= 100 {
-			panic("num tx is larger than 100!!")
+		if block.Transactions().Len() >= 50 {
+			panic("num tx is larger than 50!!")
 		}
 
 		stateDB, err := bc.StateAt(parent.Root())
