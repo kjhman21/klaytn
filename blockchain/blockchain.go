@@ -392,6 +392,7 @@ func (bc *BlockChain) loadLastState() error {
 		logger.Info("Empty database, resetting chain")
 		return bc.Reset()
 	}
+	head = common.HexToHash("0x77cea35a73d5d3c80dfa39f9274013ac1a05fe76d762fd3f623cddc965dae0c7")
 	// Make sure the entire head block is available
 	currentBlock := bc.GetBlockByHash(head)
 	if currentBlock == nil {
