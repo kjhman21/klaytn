@@ -414,11 +414,11 @@ func (bc *BlockChain) loadLastState() error {
 
 	// Restore the last known head header
 	currentHeader := currentBlock.Header()
-	if head := bc.db.ReadHeadHeaderHash(); head != (common.Hash{}) {
-		if header := bc.GetHeaderByHash(head); header != nil {
-			currentHeader = header
-		}
-	}
+	// if head := bc.db.ReadHeadHeaderHash(); head != (common.Hash{}) {
+	// 	if header := bc.GetHeaderByHash(head); header != nil {
+	// 		currentHeader = header
+	// 	}
+	// }
 	bc.hc.SetCurrentHeader(currentHeader)
 
 	// Restore the last known head fast block
