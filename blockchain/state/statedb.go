@@ -493,7 +493,7 @@ func (self *StateDB) getStateObject(addr common.Address) *stateObject {
 		if obj.deleted {
 			return nil
 		}
-		logger.Info("returning state object from live object pool", "addr", addr.Hex())
+		logger.Info("[State.GetState] returning state object from live object pool", "goid", common.GoId(), "addr", addr.Hex())
 		return obj
 	}
 	// Track the amount of time wasted on loading the object from the database
@@ -502,6 +502,7 @@ func (self *StateDB) getStateObject(addr common.Address) *stateObject {
 	}
 	// Second, the object for given address is not cached.
 	// Load the object from the database.
+	logger.Info("[State.GetState] Read storage trie from DB", "goid", common.GoId(), "addr", addr.Hex())
 	enc, err := self.trie.TryGet(addr[:])
 	if len(enc) == 0 {
 		self.setError(err)
@@ -517,6 +518,7 @@ func (self *StateDB) getStateObject(addr common.Address) *stateObject {
 	obj := newObject(self, addr, data)
 	self.setStateObject(obj)
 
+	logger.Info("[State.GetState] Read storage trie from DB -- done", "goid", common.GoId(), "addr", addr.Hex(), "value", common.Bytes2Hex(enc))
 	return obj
 }
 

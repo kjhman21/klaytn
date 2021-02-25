@@ -102,12 +102,12 @@ func (t *Trie) Get(key []byte) []byte {
 // If a node was not found in the database, a MissingNodeError is returned.
 func (t *Trie) TryGet(key []byte) ([]byte, error) {
 	key = keybytesToHex(key)
-	logger.Info("[TryGet] trying to find key", "key", common.Bytes2Hex(key))
+	logger.Info("[TryGet] trying to find key", "goid", common.GoId(), "key", common.Bytes2Hex(key))
 	value, newroot, didResolve, err := t.tryGet(t.root, key, 0)
 	if err == nil && didResolve {
 		t.root = newroot
 	}
-	logger.Info("[TryGet] trying to find key Done.", "key", common.Bytes2Hex(key), "value", common.Bytes2Hex(value))
+	logger.Info("[TryGet] trying to find key Done.", "goid", common.GoId(), "key", common.Bytes2Hex(key), "value", common.Bytes2Hex(value))
 	return value, err
 }
 
@@ -115,10 +115,10 @@ func (t *Trie) tryGet(origNode node, key []byte, pos int) (value []byte, newnode
 	logger.Info("[tryGet] find node", "key", common.Bytes2Hex(key))
 	switch n := (origNode).(type) {
 	case nil:
-		logger.Info("[tryGet] find node -- done", "key", common.Bytes2Hex(key), "pos", pos, "value", "nil")
+		logger.Info("[tryGet] find node -- done", "goid", common.GoId(), "key", common.Bytes2Hex(key), "pos", pos, "value", "nil")
 		return nil, nil, false, nil
 	case valueNode:
-		logger.Info("[tryGet] find node -- done", "key", common.Bytes2Hex(key), "pos", pos, "value node", common.Bytes2Hex(n))
+		logger.Info("[tryGet] find node -- done", "goid", common.GoId(), "key", common.Bytes2Hex(key), "pos", pos, "value node", common.Bytes2Hex(n))
 		return n, n, false, nil
 	case *shortNode:
 		if len(key)-pos < len(n.Key) || !bytes.Equal(n.Key, key[pos:pos+len(n.Key)]) {
@@ -130,7 +130,7 @@ func (t *Trie) tryGet(origNode node, key []byte, pos int) (value []byte, newnode
 			n = n.copy()
 			n.Val = newnode
 		}
-		logger.Info("[tryGet] find node -- done", "key", common.Bytes2Hex(key), "pos", pos, "short node", common.Bytes2Hex(value))
+		logger.Info("[tryGet] find node -- done", "goid", common.GoId(), "key", common.Bytes2Hex(key), "pos", pos, "short node", common.Bytes2Hex(value))
 		return value, n, didResolve, err
 	case *fullNode:
 		value, newnode, didResolve, err = t.tryGet(n.Children[key[pos]], key, pos+1)
@@ -138,7 +138,7 @@ func (t *Trie) tryGet(origNode node, key []byte, pos int) (value []byte, newnode
 			n = n.copy()
 			n.Children[key[pos]] = newnode
 		}
-		logger.Info("[tryGet] find node -- done", "key", common.Bytes2Hex(key), "pos", pos, "full node", common.Bytes2Hex(value))
+		logger.Info("[tryGet] find node -- done", "goid", common.GoId(), "key", common.Bytes2Hex(key), "pos", pos, "full node", common.Bytes2Hex(value))
 		return value, n, didResolve, err
 	case hashNode:
 		child, err := t.resolveHash(n, key[:pos])
@@ -146,7 +146,7 @@ func (t *Trie) tryGet(origNode node, key []byte, pos int) (value []byte, newnode
 			return nil, n, true, err
 		}
 		value, newnode, _, err := t.tryGet(child, key, pos)
-		logger.Info("[tryGet] find node -- done", "key", common.Bytes2Hex(key), "pos", pos, "hash node", common.Bytes2Hex(value))
+		logger.Info("[tryGet] find node -- done", "goid", common.GoId(), "key", common.Bytes2Hex(key), "pos", pos, "hash node", common.Bytes2Hex(value))
 		return value, newnode, true, err
 	default:
 		panic(fmt.Sprintf("%T: invalid node: %v", origNode, origNode))

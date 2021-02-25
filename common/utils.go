@@ -24,6 +24,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"runtime"
+	"strconv"
+	"strings"
 )
 
 // LoadJSON reads the given file and unmarshals its content.
@@ -54,4 +57,15 @@ func findLine(data []byte, offset int64) (line int) {
 		}
 	}
 	return
+}
+
+func GoId() int {
+	var buf [64]byte
+	n := runtime.Stack(buf[:], false)
+	idField := strings.Fields(strings.TrimPrefix(string(buf[:n]), "goroutine "))[0]
+	id, err := strconv.Atoi(idField)
+	if err != nil {
+		panic(fmt.Sprintf("cannot get goroutine id: %v", err))
+	}
+	return id
 }
