@@ -239,7 +239,7 @@ func (st *StateTransition) TransitionDb() (ret []byte, usedGas uint64, kerr kerr
 	// Pay intrinsic gas.
 	if kerr.ErrTxInvalid = st.useGas(msg.ValidatedIntrinsicGas()); kerr.ErrTxInvalid != nil {
 		kerr.Status = getReceiptStatusFromErrTxFailed(nil)
-		logger.Info("Returning transition DB", "goid", common.GoId(), "txhash", st.msg.Hash().Hex(), "phase2 err", kerr.ErrTxInvalid)
+		logger.Info("Returning transition DB", "goid", common.GoId(), "txhash", st.msg.Hash().Hex(), "phase2 err", kerr.ErrTxInvalid, "st.gas", st.gas, "required gas", msg.ValidatedIntrinsicGas())
 		return nil, 0, kerr
 	}
 
