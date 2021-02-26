@@ -23,7 +23,6 @@ package state
 import (
 	"fmt"
 	"math/big"
-	"runtime"
 	"sort"
 	"sync/atomic"
 	"time"
@@ -504,10 +503,10 @@ func (self *StateDB) getStateObject(addr common.Address) *stateObject {
 	// Second, the object for given address is not cached.
 	// Load the object from the database.
 	logger.Info("[State.GetState] Read from state trie", "goid", common.GoId(), "addr", addr.Hex())
-	buf := make([]byte, 1024*1024)
-	buf = buf[:runtime.Stack(buf, true)]
-	msg := string(buf) + "\n\n"
-	logger.Info("stack", "msg", msg)
+	// buf := make([]byte, 1024*1024)
+	// buf = buf[:runtime.Stack(buf, true)]
+	// msg := string(buf) + "\n\n"
+	// logger.Info("stack", "msg", msg)
 	enc, err := self.trie.TryGet(addr[:])
 	if len(enc) == 0 {
 		self.setError(err)
