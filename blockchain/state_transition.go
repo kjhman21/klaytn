@@ -227,7 +227,9 @@ func (st *StateTransition) preCheck() error {
 // returning the result including the used gas. It returns an error if failed.
 // An error indicates a consensus issue.
 func (st *StateTransition) TransitionDb() (ret []byte, usedGas uint64, kerr kerror) {
-	if !st.evm.IsPrefetching() {
+	if st.evm.IsPrefetching() {
+		st.gas = st.msg.Gas()
+	} else {
 		if kerr.ErrTxInvalid = st.preCheck(); kerr.ErrTxInvalid != nil {
 			logger.Info("Returning transition DB", "goid", common.GoId(), "txhash", st.msg.Hash().Hex(), "phase1 err", kerr.ErrTxInvalid)
 			return
