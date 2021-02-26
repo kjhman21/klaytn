@@ -228,7 +228,7 @@ func (st *StateTransition) preCheck() error {
 // An error indicates a consensus issue.
 func (st *StateTransition) TransitionDb() (ret []byte, usedGas uint64, kerr kerror) {
 	if kerr.ErrTxInvalid = st.preCheck(); kerr.ErrTxInvalid != nil {
-		logger.Info("Returning transition DB", "goid", common.GoId(), "phase1 err", kerr.ErrTxInvalid.Error())
+		logger.Info("Returning transition DB", "goid", common.GoId(), "txhash", st.msg.Hash().Hex(), "phase1 err", kerr.ErrTxInvalid)
 		return
 	}
 	msg := st.msg
@@ -236,7 +236,7 @@ func (st *StateTransition) TransitionDb() (ret []byte, usedGas uint64, kerr kerr
 	// Pay intrinsic gas.
 	if kerr.ErrTxInvalid = st.useGas(msg.ValidatedIntrinsicGas()); kerr.ErrTxInvalid != nil {
 		kerr.Status = getReceiptStatusFromErrTxFailed(nil)
-		logger.Info("Returning transition DB", "goid", common.GoId(), "phase2 err", kerr.ErrTxInvalid.Error())
+		logger.Info("Returning transition DB", "goid", common.GoId(), "txhash", st.msg.Hash().Hex(), "phase2 err", kerr.ErrTxInvalid)
 		return nil, 0, kerr
 	}
 
@@ -261,7 +261,7 @@ func (st *StateTransition) TransitionDb() (ret []byte, usedGas uint64, kerr kerr
 		if errTxFailed == vm.ErrInsufficientBalance || errTxFailed == vm.ErrTotalTimeLimitReached {
 			kerr.ErrTxInvalid = errTxFailed
 			kerr.Status = getReceiptStatusFromErrTxFailed(nil)
-			logger.Info("Returning transition DB", "goid", common.GoId(), "phase3 err", kerr.ErrTxInvalid.Error())
+			logger.Info("Returning transition DB", "goid", common.GoId(), "txhash", st.msg.Hash().Hex(), "phase3 err", kerr.ErrTxInvalid)
 			return nil, 0, kerr
 		}
 	}
@@ -274,7 +274,7 @@ func (st *StateTransition) TransitionDb() (ret []byte, usedGas uint64, kerr kerr
 
 	kerr.ErrTxInvalid = nil
 	kerr.Status = getReceiptStatusFromErrTxFailed(errTxFailed)
-	logger.Info("Returning transition DB", "goid", common.GoId(), "phase4 err", kerr.ErrTxInvalid.Error())
+	logger.Info("Returning transition DB", "goid", common.GoId(), "txhash", st.msg.Hash().Hex(), "phase4 err", kerr.ErrTxInvalid)
 	return ret, st.gasUsed(), kerr
 }
 
