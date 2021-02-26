@@ -82,6 +82,7 @@ func (p *statePrefetcher) PrefetchTx(block *types.Block, ti int, stateDB *state.
 
 	// If block precaching was interrupted, abort
 	if interrupt != nil && atomic.LoadUint32(interrupt) == 1 {
+		logger.Info("prefetching interrupted", "goid", common.GoId(), "txhash", tx.Hash().Hex())
 		return
 	}
 
@@ -105,6 +106,7 @@ func precacheTransaction(config *params.ChainConfig, bc ChainContext, author *co
 	context := NewEVMContext(msg, header, bc, author)
 	vm := vm.NewEVM(context, statedb, config, &cfg)
 
+	logger.Info("Executing prefetching", "goid", common.GoId(), "txhash", tx.Hash().Hex())
 	_, _, kerr := ApplyMessage(vm, msg)
 	return kerr.ErrTxInvalid
 }
