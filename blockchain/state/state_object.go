@@ -175,7 +175,7 @@ func (c *stateObject) getStorageTrie(db Database) Trie {
 func (self *stateObject) GetState(db Database, key common.Hash) common.Hash {
 	value, exists := self.cachedStorage[key]
 	if exists {
-		logger.Info("[Storage.GetState] Get storage read done by cachedStorage", "goid", common.GoId(), "key", key.Hex(), "value", value.Hex())
+		logger.Info("[Storage.GetState] Read from cachedStorage", "goid", common.GoId(), "key", key.Hex(), "value", value.Hex())
 		return value
 	}
 	// Load from DB in case it is missing.
@@ -183,7 +183,7 @@ func (self *stateObject) GetState(db Database, key common.Hash) common.Hash {
 	if EnabledExpensive {
 		defer func(start time.Time) { self.db.StorageReads += time.Since(start) }(time.Now())
 	}
-	logger.Info("[Storage.GetState] Read storage trie from DB", "goid", common.GoId(), "key", key.Hex())
+	logger.Info("[Storage.GetState] Read from storage trie", "goid", common.GoId(), "key", key.Hex())
 	enc, err := self.getStorageTrie(db).TryGet(key[:])
 	if err != nil {
 		self.setError(err)
@@ -197,7 +197,7 @@ func (self *stateObject) GetState(db Database, key common.Hash) common.Hash {
 		value.SetBytes(content)
 	}
 	self.cachedStorage[key] = value
-	logger.Info("[Storage.GetState] Read storage trie from DB -- done", "goid", common.GoId(), "key", key.Hex(), "value", value.Hex())
+	logger.Info("[Storage.GetState] Read from storage trie -- done", "goid", common.GoId(), "key", key.Hex(), "value", value.Hex())
 	return value
 }
 
