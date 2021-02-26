@@ -91,9 +91,6 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		receipts = append(receipts, receipt)
 		allLogs = append(allLogs, receipt.Logs...)
 		internalTxTraces = append(internalTxTraces, internalTxTrace)
-		if i >= 2 {
-			panic("panic..")
-		}
 	}
 	processStats.AfterApplyTxs = time.Now()
 
