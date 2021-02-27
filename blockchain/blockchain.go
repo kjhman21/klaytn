@@ -1598,12 +1598,12 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 
 		if !bc.cacheConfig.TrieNodeCacheConfig.NoPrefetch {
 			// if fetcher works and only a block is given, use prefetchTxWorker
-			for ti := range block.Transactions() {
-				select {
-				case bc.prefetchTxCh <- prefetchTx{ti, block, &followupInterrupt}:
-				default:
-				}
-			}
+			// for ti := range block.Transactions() {
+			// 	select {
+			// 	case bc.prefetchTxCh <- prefetchTx{ti, block, &followupInterrupt}:
+			// 	default:
+			// 	}
+			// }
 		}
 		// If the header is a banned one, straight out abort
 		if BadHashes[block.Hash()] {
