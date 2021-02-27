@@ -1589,6 +1589,22 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 			logger.Debug("Premature abort during blocks processing")
 			break
 		}
+
+		// If we have a followup block, run that against the current state to pre-cache
+		// transactions and probabilistically some of the account/storage trie nodes.
+		var followupInterrupt uint32
+
+		logger.Info("followup insterrupt", "i", i, "address", &followupInterrupt)
+
+		if !bc.cacheConfig.TrieNodeCacheConfig.NoPrefetch {
+			// if fetcher works and only a block is given, use prefetchTxWorker
+			for ti := range block.Transactions() {
+				select {
+				case bc.prefetchTxCh <- prefetchTx{ti, block, &followupInterrupt}:
+				default:
+				}
+			}
+		}
 		// If the header is a banned one, straight out abort
 		if BadHashes[block.Hash()] {
 			bc.reportBlock(block, nil, ErrBlacklistedHash)
@@ -1675,36 +1691,6 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 		stateDB, err := bc.StateAt(parent.Root())
 		if err != nil {
 			return i, events, coalescedLogs, err
-		}
-		// If we have a followup block, run that against the current state to pre-cache
-		// transactions and probabilistically some of the account/storage trie nodes.
-		var followupInterrupt uint32
-
-		if !bc.cacheConfig.TrieNodeCacheConfig.NoPrefetch {
-			// if fetcher works and only a block is given, use prefetchTxWorker
-			if len(chain) == 1 {
-				for ti := range block.Transactions() {
-					select {
-					case bc.prefetchTxCh <- prefetchTx{ti, block, &followupInterrupt}:
-					default:
-					}
-				}
-			} else if i < len(chain)-1 {
-				// current block is not the last one, so prefetch the right next block
-				followup := chain[i+1]
-				go func(start time.Time) {
-					throwaway, _ := state.New(parent.Root(), bc.stateCache)
-					vmCfg := vm.Config{}
-					vmCfg = bc.vmConfig
-					vmCfg.Prefetching = true
-					bc.prefetcher.Prefetch(followup, throwaway, vmCfg, &followupInterrupt)
-
-					blockPrefetchExecuteTimer.Update(time.Since(start))
-					if atomic.LoadUint32(&followupInterrupt) == 1 {
-						blockPrefetchInterruptMeter.Mark(1)
-					}
-				}(time.Now())
-			}
 		}
 
 		// Process block using the parent state as reference point.
