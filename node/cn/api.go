@@ -155,10 +155,10 @@ func (api *PrivateAdminAPI) importChain(stream *rlp.Stream) (bool, error) {
 			break
 		}
 
-		if hasAllBlocks(api.cn.BlockChain(), blocks) {
-			blocks = blocks[:0]
-			continue
-		}
+		// if hasAllBlocks(api.cn.BlockChain(), blocks) {
+		// 	blocks = blocks[:0]
+		// 	continue
+		// }
 		// Import the batch and reset the buffer
 		if _, err := api.cn.BlockChain().InsertChain(blocks); err != nil {
 			return false, fmt.Errorf("batch %d: failed to insert: %v", batch, err)
