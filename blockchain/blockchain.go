@@ -410,20 +410,20 @@ func (bc *BlockChain) loadLastState() error {
 
 	// Restore the last known head header
 	currentHeader := currentBlock.Header()
-	if head := bc.db.ReadHeadHeaderHash(); head != (common.Hash{}) {
-		if header := bc.GetHeaderByHash(head); header != nil {
-			currentHeader = header
-		}
-	}
+	// if head := bc.db.ReadHeadHeaderHash(); head != (common.Hash{}) {
+	// 	if header := bc.GetHeaderByHash(head); header != nil {
+	// 		currentHeader = header
+	// 	}
+	// }
 	bc.hc.SetCurrentHeader(currentHeader)
 
 	// Restore the last known head fast block
 	bc.currentFastBlock.Store(currentBlock)
-	if head := bc.db.ReadHeadFastBlockHash(); head != (common.Hash{}) {
-		if block := bc.GetBlockByHash(head); block != nil {
-			bc.currentFastBlock.Store(block)
-		}
-	}
+	// if head := bc.db.ReadHeadFastBlockHash(); head != (common.Hash{}) {
+	// 	if block := bc.GetBlockByHash(head); block != nil {
+	// 		bc.currentFastBlock.Store(block)
+	// 	}
+	// }
 
 	// Issue a status log for the user
 	currentFastBlock := bc.CurrentFastBlock()
