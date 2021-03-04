@@ -294,6 +294,7 @@ var FlagGroups = []FlagGroup{
 			RestartTimeOutFlag,
 			DaemonPathFlag,
 			KESNodeTypeServiceFlag,
+			NumPrefetchWorkersFlag,
 		},
 	},
 }

@@ -142,6 +142,9 @@ type Config struct {
 	// Istanbul options
 	Istanbul istanbul.Config
 
+	// Number of prefetch tx workers
+	NumPrefetchWorkers int
+
 	// Miscellaneous options
 	DocRoot string `toml:"-"`
 
@@ -175,5 +178,6 @@ func (c *Config) getVMConfig() vm.Config {
 	return vm.Config{
 		EnablePreimageRecording: c.EnablePreimageRecording,
 		EnableInternalTxTracing: c.EnableInternalTxTracing,
+		NumPrefetchWorkers:      c.NumPrefetchWorkers,
 	}
 }

@@ -27,6 +27,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -918,6 +919,12 @@ var (
 		Value: "~/klaytn/bin/kcnd",
 	}
 
+	NumPrefetchWorkersFlag = cli.IntFlag{
+		Name:  "prefetch.workers",
+		Usage: "The number of workers pre-executing transactions for state prefetching. The default value is the half of the number of CPUs.",
+		Value: runtime.NumCPU() / 2,
+	}
+
 	// db migration vars
 	DstDbTypeFlag = cli.StringFlag{
 		Name:  "dst.dbtype",
@@ -1547,6 +1554,7 @@ func SetKlayConfig(ctx *cli.Context, stack *node.Node, cfg *cn.Config) {
 	cfg.AutoRestartFlag = ctx.GlobalBool(AutoRestartFlag.Name)
 	cfg.RestartTimeOutFlag = ctx.GlobalDuration(RestartTimeOutFlag.Name)
 	cfg.DaemonPathFlag = ctx.GlobalString(DaemonPathFlag.Name)
+	cfg.NumPrefetchWorkers = ctx.GlobalInt(NumPrefetchWorkersFlag.Name)
 
 	if ctx.GlobalIsSet(RPCGlobalGasCap.Name) {
 		cfg.RPCGasCap = new(big.Int).SetUint64(ctx.GlobalUint64(RPCGlobalGasCap.Name))

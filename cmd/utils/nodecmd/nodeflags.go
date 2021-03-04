@@ -111,6 +111,7 @@ var CommonNodeFlags = []cli.Flag{
 	utils.RestartTimeOutFlag,
 	utils.DaemonPathFlag,
 	utils.ConfigFileFlag,
+	utils.NumPrefetchWorkersFlag,
 }
 
 // Common RPC flags
