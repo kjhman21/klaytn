@@ -1584,6 +1584,19 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 
 	// Iterate over the blocks and insert when the verifier permits
 	for i, block := range chain {
+		// If we have a followup block, run that against the current state to pre-cache
+		// transactions and probabilistically some of the account/storage trie nodes.
+		var followupInterrupt uint32
+
+		if !bc.cacheConfig.TrieNodeCacheConfig.NoPrefetch {
+			// if fetcher works and only a block is given, use prefetchTxWorker
+			for ti := range block.Transactions() {
+				select {
+				case bc.prefetchTxCh <- prefetchTx{ti, block, &followupInterrupt}:
+				default:
+				}
+			}
+		}
 		// If the chain is terminating, stop processing blocks
 		if atomic.LoadInt32(&bc.procInterrupt) == 1 {
 			logger.Debug("Premature abort during blocks processing")
@@ -1675,19 +1688,6 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 		stateDB, err := bc.StateAt(parent.Root())
 		if err != nil {
 			return i, events, coalescedLogs, err
-		}
-		// If we have a followup block, run that against the current state to pre-cache
-		// transactions and probabilistically some of the account/storage trie nodes.
-		var followupInterrupt uint32
-
-		if !bc.cacheConfig.TrieNodeCacheConfig.NoPrefetch {
-			// if fetcher works and only a block is given, use prefetchTxWorker
-			for ti := range block.Transactions() {
-				select {
-				case bc.prefetchTxCh <- prefetchTx{ti, block, &followupInterrupt}:
-				default:
-				}
-			}
 		}
 
 		// Process block using the parent state as reference point.
