@@ -117,12 +117,16 @@ func (t *Trie) TryGet(key []byte) ([]byte, error) {
 }
 
 func (t *Trie) tryGet(origNode node, key []byte, pos int) (value []byte, newnode node, didResolve bool, err error) {
+	logger.Info("[Trie.tryGet]", "key", common.Bytes2Hex(key), "pos", pos)
 	switch n := (origNode).(type) {
 	case nil:
+		logger.Info("[Trie.tryGet] nil node", "key", common.Bytes2Hex(key), "pos", pos)
 		return nil, nil, false, nil
 	case valueNode:
+		logger.Info("[Trie.tryGet] value node", "key", common.Bytes2Hex(key), "pos", pos)
 		return n, n, false, nil
 	case *shortNode:
+		logger.Info("[Trie.tryGet] short node", "key", common.Bytes2Hex(key), "pos", pos)
 		if len(key)-pos < len(n.Key) || !bytes.Equal(n.Key, key[pos:pos+len(n.Key)]) {
 			// key not found in trie
 			return nil, n, false, nil
@@ -134,6 +138,7 @@ func (t *Trie) tryGet(origNode node, key []byte, pos int) (value []byte, newnode
 		}
 		return value, n, didResolve, err
 	case *fullNode:
+		logger.Info("[Trie.tryGet] full node", "key", common.Bytes2Hex(key), "pos", pos)
 		value, newnode, didResolve, err = t.tryGet(n.Children[key[pos]], key, pos+1)
 		if err == nil && didResolve {
 			n = n.copy()
@@ -141,6 +146,7 @@ func (t *Trie) tryGet(origNode node, key []byte, pos int) (value []byte, newnode
 		}
 		return value, n, didResolve, err
 	case hashNode:
+		logger.Info("[Trie.tryGet] hash node", "key", common.Bytes2Hex(key), "pos", pos)
 		child, err := t.resolveHash(n, key[:pos])
 		if err != nil {
 			return nil, n, true, err

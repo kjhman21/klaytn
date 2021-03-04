@@ -507,6 +507,7 @@ func (db *Database) setCachedNode(hash, enc []byte) {
 func (db *Database) node(hash common.Hash) (n node, fromDB bool) {
 	// Retrieve the node from the trie node cache if available
 	if enc := db.getCachedNode(hash); enc != nil {
+		logger.Info("[Database.node] returning node from db.trieNodeCache", "hash", hash.Hex())
 		if dec, err := decodeNode(hash[:], enc); err == nil {
 			return dec, false
 		} else {
@@ -519,11 +520,13 @@ func (db *Database) node(hash common.Hash) (n node, fromDB bool) {
 	node := db.nodes[hash]
 	db.lock.RUnlock()
 	if node != nil {
+		logger.Info("[Database.node] returning node from db.nodes", "hash", hash.Hex())
 		return node.obj(hash), false
 	}
 
 	// Content unavailable in memory, attempt to retrieve from disk
 	enc, err := db.diskDB.ReadCachedTrieNode(hash)
+	logger.Info("[Database.node] returning node from disk", "hash", hash.Hex())
 	if err != nil || enc == nil {
 		return nil, true
 	}

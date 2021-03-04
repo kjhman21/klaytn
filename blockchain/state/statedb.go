@@ -511,6 +511,7 @@ func (self *StateDB) deleteStateObject(stateObject *stateObject) {
 func (self *StateDB) getStateObject(addr common.Address) *stateObject {
 	// First, check stateObjects if there is "live" object.
 	if obj := self.stateObjects[addr]; obj != nil {
+		logger.Info("[getStateObject] Returning a state object from self.stateObjects", "addr", addr.Hex())
 		if obj.deleted {
 			return nil
 		}

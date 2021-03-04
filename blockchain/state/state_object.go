@@ -180,8 +180,10 @@ func (c *stateObject) getStorageTrie(db Database) Trie {
 
 // GetState returns a value in account storage.
 func (self *stateObject) GetState(db Database, key common.Hash) common.Hash {
+	logger.Info("[stateObject.GetState]", "key", key.Hex())
 	value, exists := self.cachedStorage[key]
 	if exists {
+		logger.Info("[stateObject.GetState] returning from self.cachedStorage", "key", key.Hex())
 		return value
 	}
 	// Load from DB in case it is missing.
@@ -189,6 +191,7 @@ func (self *stateObject) GetState(db Database, key common.Hash) common.Hash {
 	if EnabledExpensive {
 		defer func(start time.Time) { self.db.StorageReads += time.Since(start) }(time.Now())
 	}
+	logger.Info("[stateObject.GetState] returning from storage trie", "key", key.Hex())
 	enc, err := self.getStorageTrie(db).TryGet(key[:])
 	if err != nil {
 		self.setError(err)
