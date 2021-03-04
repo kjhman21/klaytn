@@ -57,6 +57,9 @@ type Config struct {
 
 	// Prefetching is true if the EVM is used for prefetching.
 	Prefetching bool
+
+	// NumPrefetchWorkers determines the number of prefetch workers.
+	NumPrefetchWorkers int
 }
 
 // keccakState wraps sha3.state. In addition to the usual hash methods, it also supports

@@ -285,7 +285,8 @@ func NewBlockChain(db database.DBManager, cacheConfig *CacheConfig, chainConfig 
 		}
 	}
 
-	for i := 1; i <= runtime.NumCPU()/2; i++ {
+	logger.Info("Number of prefetch tx workers", "num", vmConfig.NumPrefetchWorkers)
+	for i := 1; i <= vmConfig.NumPrefetchWorkers; i++ {
 		bc.wg.Add(1)
 		go bc.prefetchTxWorker(i)
 	}
