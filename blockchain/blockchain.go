@@ -1358,11 +1358,11 @@ func (bc *BlockChain) writeBlockWithStateSerial(block *types.Block, receipts []*
 	reorg := isReorganizationRequired(localTd, externTd, currentBlock, block)
 	if reorg {
 		// Reorganise the chain if the parent is not the head block
-		if block.ParentHash() != currentBlock.Hash() {
-			if err := bc.reorg(currentBlock, block); err != nil {
-				return WriteResult{Status: NonStatTy}, err
-			}
-		}
+		// if block.ParentHash() != currentBlock.Hash() {
+		// 	if err := bc.reorg(currentBlock, block); err != nil {
+		// 		return WriteResult{Status: NonStatTy}, err
+		// 	}
+		// }
 		// Write the positional metadata for transaction/receipt lookups and preimages
 		if err := bc.writeTxLookupEntries(block); err != nil {
 			return WriteResult{Status: NonStatTy}, err
@@ -1451,11 +1451,11 @@ func (bc *BlockChain) writeBlockWithStateParallel(block *types.Block, receipts [
 	reorg := isReorganizationRequired(localTd, externTd, currentBlock, block)
 	if reorg {
 		// Reorganise the chain if the parent is not the head block
-		if block.ParentHash() != currentBlock.Hash() {
-			if err := bc.reorg(currentBlock, block); err != nil {
-				return WriteResult{Status: NonStatTy}, err
-			}
-		}
+		// if block.ParentHash() != currentBlock.Hash() {
+		// 	if err := bc.reorg(currentBlock, block); err != nil {
+		// 		return WriteResult{Status: NonStatTy}, err
+		// 	}
+		// }
 
 		parallelDBWriteWG.Add(2)
 
