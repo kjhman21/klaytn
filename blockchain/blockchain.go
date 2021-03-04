@@ -1245,7 +1245,7 @@ func isReorganizationRequired(localTd, externTd *big.Int, currentBlock, block *t
 		// Split same-blockscore blocks by number, then at random
 		reorg = block.NumberU64() < currentBlock.NumberU64() || (block.NumberU64() == currentBlock.NumberU64() && mrand.Float64() < 0.5)
 	}
-	return false
+	return reorg
 }
 
 // WriteBlockWithState writes the block and all associated state to the database.
