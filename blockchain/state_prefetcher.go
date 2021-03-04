@@ -60,6 +60,7 @@ func (p *statePrefetcher) Prefetch(block *types.Block, stateDB *state.StateDB, c
 	for i, tx := range block.Transactions() {
 		// If block precaching was interrupted, abort
 		if interrupt != nil && atomic.LoadUint32(interrupt) == 1 {
+			blockPrefetchTransactionInterruptMeter.Mark(1)
 			return
 		}
 		// Block precaching permitted to continue, execute the transaction
@@ -82,6 +83,7 @@ func (p *statePrefetcher) PrefetchTx(block *types.Block, ti int, stateDB *state.
 
 	// If block precaching was interrupted, abort
 	if interrupt != nil && atomic.LoadUint32(interrupt) == 1 {
+		blockPrefetchTransactionInterruptMeter.Mark(1)
 		return
 	}
 

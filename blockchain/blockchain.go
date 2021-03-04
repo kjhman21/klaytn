@@ -75,8 +75,9 @@ var (
 	blockValidateTimer  = metrics.NewRegisteredTimer("chain/validate", nil)
 	blockAgeTimer       = metrics.NewRegisteredTimer("chain/age", nil)
 
-	blockPrefetchExecuteTimer   = metrics.NewRegisteredTimer("chain/prefetch/executes", nil)
-	blockPrefetchInterruptMeter = metrics.NewRegisteredMeter("chain/prefetch/interrupts", nil)
+	blockPrefetchExecuteTimer              = metrics.NewRegisteredTimer("chain/prefetch/executes", nil)
+	blockPrefetchInterruptMeter            = metrics.NewRegisteredMeter("chain/prefetch/interrupts", nil)
+	blockPrefetchTransactionInterruptMeter = metrics.NewRegisteredMeter("chain/prefetch/transaction/interrupts", nil)
 
 	ErrNoGenesis            = errors.New("genesis not found in chain")
 	ErrNotExistNode         = errors.New("the node does not exist in cached node")
@@ -1682,28 +1683,11 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 
 		if !bc.cacheConfig.TrieNodeCacheConfig.NoPrefetch {
 			// if fetcher works and only a block is given, use prefetchTxWorker
-			if len(chain) == 1 {
-				for ti := range block.Transactions() {
-					select {
-					case bc.prefetchTxCh <- prefetchTx{ti, block, &followupInterrupt}:
-					default:
-					}
+			for ti := range block.Transactions() {
+				select {
+				case bc.prefetchTxCh <- prefetchTx{ti, block, &followupInterrupt}:
+				default:
 				}
-			} else if i < len(chain)-1 {
-				// current block is not the last one, so prefetch the right next block
-				followup := chain[i+1]
-				go func(start time.Time) {
-					throwaway, _ := state.NewForPrefetching(parent.Root(), bc.stateCache)
-					vmCfg := vm.Config{}
-					vmCfg = bc.vmConfig
-					vmCfg.Prefetching = true
-					bc.prefetcher.Prefetch(followup, throwaway, vmCfg, &followupInterrupt)
-
-					blockPrefetchExecuteTimer.Update(time.Since(start))
-					if atomic.LoadUint32(&followupInterrupt) == 1 {
-						blockPrefetchInterruptMeter.Mark(1)
-					}
-				}(time.Now())
 			}
 		}
 
