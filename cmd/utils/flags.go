@@ -27,7 +27,6 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -921,8 +920,8 @@ var (
 
 	NumPrefetchWorkersFlag = cli.IntFlag{
 		Name:  "prefetch.workers",
-		Usage: "The number of workers pre-executing transactions for state prefetching. The default value is the half of the number of CPUs.",
-		Value: runtime.NumCPU() / 2,
+		Usage: "The number of workers pre-executing transactions for state prefetching.",
+		Value: 50,
 	}
 
 	// db migration vars
