@@ -1681,28 +1681,11 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 		var followupInterrupt uint32
 
 		if !bc.cacheConfig.TrieNodeCacheConfig.NoPrefetch {
-			// if fetcher works and only a block is given, use prefetchTxWorker
 			for ti := range block.Transactions() {
 				select {
 				case bc.prefetchTxCh <- prefetchTx{ti, block, &followupInterrupt}:
 				default:
 				}
-			}
-			if i < len(chain)-1 {
-				// current block is not the last one, so prefetch the right next block
-				followup := chain[i+1]
-				go func(start time.Time) {
-					throwaway, _ := state.NewForPrefetching(parent.Root(), bc.stateCache)
-					vmCfg := vm.Config{}
-					vmCfg = bc.vmConfig
-					vmCfg.Prefetching = true
-					bc.prefetcher.Prefetch(followup, throwaway, vmCfg, &followupInterrupt)
-
-					blockPrefetchExecuteTimer.Update(time.Since(start))
-					if atomic.LoadUint32(&followupInterrupt) == 1 {
-						blockPrefetchInterruptMeter.Mark(1)
-					}
-				}(time.Now())
 			}
 		}
 
