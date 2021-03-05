@@ -1536,6 +1536,21 @@ func (bc *BlockChain) InsertChain(chain types.Blocks) (int, error) {
 // only reason this method exists as a separate one is to make locking cleaner
 // with deferred statements.
 func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*types.Log, error) {
+	// If we have a followup block, run that against the current state to pre-cache
+	// transactions and probabilistically some of the account/storage trie nodes.
+	followupInterrupts := make([]uint32, len(chain))
+
+	for i, block := range chain {
+		if !bc.cacheConfig.TrieNodeCacheConfig.NoPrefetch {
+			// if fetcher works and only a block is given, use prefetchTxWorker
+			for ti := range block.Transactions() {
+				select {
+				case bc.prefetchTxCh <- prefetchTx{ti, block, &followupInterrupts[i]}:
+				default:
+				}
+			}
+		}
+	}
 	// Sanity check that we have something meaningful to import
 	if len(chain) == 0 {
 		return 0, nil, nil, nil
@@ -1585,19 +1600,6 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 
 	// Iterate over the blocks and insert when the verifier permits
 	for i, block := range chain {
-		// If we have a followup block, run that against the current state to pre-cache
-		// transactions and probabilistically some of the account/storage trie nodes.
-		var followupInterrupt uint32
-
-		if !bc.cacheConfig.TrieNodeCacheConfig.NoPrefetch {
-			// if fetcher works and only a block is given, use prefetchTxWorker
-			for ti := range block.Transactions() {
-				select {
-				case bc.prefetchTxCh <- prefetchTx{ti, block, &followupInterrupt}:
-				default:
-				}
-			}
-		}
 		// If the chain is terminating, stop processing blocks
 		if atomic.LoadInt32(&bc.procInterrupt) == 1 {
 			logger.Debug("Premature abort during blocks processing")
@@ -1695,7 +1697,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 		receipts, logs, usedGas, internalTxTraces, procStats, err := bc.processor.Process(block, stateDB, bc.vmConfig)
 		if err != nil {
 			bc.reportBlock(block, receipts, err)
-			atomic.StoreUint32(&followupInterrupt, 1)
+			atomic.StoreUint32(&followupInterrupts[i], 1)
 			return i, events, coalescedLogs, err
 		}
 
@@ -1703,7 +1705,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 		err = bc.validator.ValidateState(block, parent, stateDB, receipts, usedGas)
 		if err != nil {
 			bc.reportBlock(block, receipts, err)
-			atomic.StoreUint32(&followupInterrupt, 1)
+			atomic.StoreUint32(&followupInterrupts[i], 1)
 			return i, events, coalescedLogs, err
 		}
 		afterValidate := time.Now()
@@ -1711,14 +1713,14 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 		// Write the block to the chain and get the writeResult.
 		writeResult, err := bc.WriteBlockWithState(block, receipts, stateDB)
 		if err != nil {
-			atomic.StoreUint32(&followupInterrupt, 1)
+			atomic.StoreUint32(&followupInterrupts[i], 1)
 			if err == ErrKnownBlock {
 				logger.Debug("Tried to insert already known block", "num", block.NumberU64(), "hash", block.Hash().String())
 				continue
 			}
 			return i, events, coalescedLogs, err
 		}
-		atomic.StoreUint32(&followupInterrupt, 1)
+		atomic.StoreUint32(&followupInterrupts[i], 1)
 
 		// Update the metrics subsystem with all the measurements
 		accountReadTimer.Update(stateDB.AccountReads)
