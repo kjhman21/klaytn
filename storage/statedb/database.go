@@ -816,6 +816,7 @@ func (db *Database) Cap(limit common.StorageSize) error {
 	}
 	for db.oldest != oldest {
 		node := db.nodes[db.oldest]
+		logger.Info("Database.Cap -- deleting oldest node", "hash", db.oldest.Hex())
 		delete(db.nodes, db.oldest)
 		db.oldest = node.flushNext
 
@@ -1028,6 +1029,7 @@ func (db *Database) uncache(hash common.Hash) {
 	for _, child := range node.childs() {
 		db.uncache(child)
 	}
+	logger.Info("Database.uncache -- deleting from db.nodes", "hash", hash.Hex())
 	delete(db.nodes, hash)
 	db.nodesSize -= common.StorageSize(common.HashLength + int(node.size))
 }

@@ -270,6 +270,7 @@ func (h *hasher) store(n node, db *Database, force bool) (node, uint16) {
 		hash := common.BytesToHash(hash)
 
 		db.lock.Lock()
+		logger.Info("hasher.store", "adding hash", hash.Hex())
 		db.insert(hash, lenEncoded, n)
 		db.lock.Unlock()
 
