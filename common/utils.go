@@ -24,6 +24,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"runtime"
+	"strconv"
+	"strings"
 )
 
 // LoadJSON reads the given file and unmarshals its content.
