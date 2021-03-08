@@ -522,7 +522,7 @@ func (db *Database) node(hash common.Hash) (n node, fromDB bool) {
 		return node.obj(hash), false
 	}
 
-	logger.Info("Trying to read hash from db", "hash", hash.Hex())
+	logger.Info("Trying to read hash from db", "goid", common.GoId(), "hash", hash.Hex())
 	// Content unavailable in memory, attempt to retrieve from disk
 	enc, err := db.diskDB.ReadCachedTrieNode(hash)
 	if err != nil || enc == nil {

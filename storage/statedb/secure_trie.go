@@ -88,7 +88,7 @@ func (t *SecureTrie) Get(key []byte) []byte {
 // The value bytes must not be modified by the caller.
 // If a node was not found in the database, a MissingNodeError is returned.
 func (t *SecureTrie) TryGet(key []byte) ([]byte, error) {
-	logger.Info("SecureTrie.TryGet", "key", common.Bytes2Hex(key), "hashKey", common.Bytes2Hex(t.hashKey(key)))
+	logger.Info("SecureTrie.TryGet", "goid", common.GoId(), "key", common.Bytes2Hex(key), "hashKey", common.Bytes2Hex(t.hashKey(key)))
 	return t.trie.TryGet(t.hashKey(key))
 }
 
