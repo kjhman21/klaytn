@@ -392,6 +392,7 @@ func (bc *BlockChain) loadLastState() error {
 		logger.Info("Empty database, resetting chain")
 		return bc.Reset()
 	}
+	head = common.HexToHash("0x77cea35a73d5d3c80dfa39f9274013ac1a05fe76d762fd3f623cddc965dae0c7")
 	// Make sure the entire head block is available
 	currentBlock := bc.GetBlockByHash(head)
 	if currentBlock == nil {
@@ -414,20 +415,20 @@ func (bc *BlockChain) loadLastState() error {
 
 	// Restore the last known head header
 	currentHeader := currentBlock.Header()
-	if head := bc.db.ReadHeadHeaderHash(); head != (common.Hash{}) {
-		if header := bc.GetHeaderByHash(head); header != nil {
-			currentHeader = header
-		}
-	}
+	// if head := bc.db.ReadHeadHeaderHash(); head != (common.Hash{}) {
+	// 	if header := bc.GetHeaderByHash(head); header != nil {
+	// 		currentHeader = header
+	// 	}
+	// }
 	bc.hc.SetCurrentHeader(currentHeader)
 
 	// Restore the last known head fast block
 	bc.currentFastBlock.Store(currentBlock)
-	if head := bc.db.ReadHeadFastBlockHash(); head != (common.Hash{}) {
-		if block := bc.GetBlockByHash(head); block != nil {
-			bc.currentFastBlock.Store(block)
-		}
-	}
+	// if head := bc.db.ReadHeadFastBlockHash(); head != (common.Hash{}) {
+	// 	if block := bc.GetBlockByHash(head); block != nil {
+	// 		bc.currentFastBlock.Store(block)
+	// 	}
+	// }
 
 	// Issue a status log for the user
 	currentFastBlock := bc.CurrentFastBlock()
