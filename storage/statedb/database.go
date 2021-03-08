@@ -522,6 +522,7 @@ func (db *Database) node(hash common.Hash) (n node, fromDB bool) {
 		return node.obj(hash), false
 	}
 
+	logger.Info("Trying to read hash from db", "hash", hash.Hex())
 	// Content unavailable in memory, attempt to retrieve from disk
 	enc, err := db.diskDB.ReadCachedTrieNode(hash)
 	if err != nil || enc == nil {
@@ -661,18 +662,22 @@ func (db *Database) Reference(child common.Hash, parent common.Hash) {
 // reference is the private locked version of Reference.
 func (db *Database) reference(child common.Hash, parent common.Hash) {
 	// If the node does not exist, it's a node pulled from disk, skip
+	logger.Info("Database.reference", "goid", common.GoId(), "child", child.Hex(), "parent", parent.Hex())
 	node, ok := db.nodes[child]
 	if !ok {
+		logger.Info("Database.reference - returning since db.nodes[child] does not exist", "goid", common.GoId(), "child", child.Hex(), "parent", parent.Hex())
 		return
 	}
 	// If the reference already exists, only duplicate for roots
 	if db.nodes[parent].children == nil {
 		db.nodes[parent].children = make(map[common.Hash]uint64)
 	} else if _, ok = db.nodes[parent].children[child]; ok && parent != (common.Hash{}) {
+		logger.Info("Database.reference - returning since parent is not empty hash", "goid", common.GoId(), "child", child.Hex(), "parent", parent.Hex())
 		return
 	}
 	node.parents++
 	db.nodes[parent].children[child]++
+	logger.Info("Database.reference", "goid", common.GoId(), "child", child.Hex(), "parent", parent.Hex(), "node.parents", node.parents, "childref", db.nodes[parent].children[child])
 }
 
 // Dereference removes an existing reference from a root node.
@@ -709,15 +714,19 @@ func (db *Database) dereference(child common.Hash, parent common.Hash) {
 	// Dereference the parent-child
 	node := db.nodes[parent]
 
+	logger.Info("Database.dereference", "goid", common.GoId(), "child", child.Hex(), "parent", parent.Hex(), "childref", node.children[child])
+
 	if node.children != nil && node.children[child] > 0 {
 		node.children[child]--
 		if node.children[child] == 0 {
+			logger.Info("Database.dereference -- deleting child", "goid", common.GoId(), "child", child.Hex(), "parent", parent.Hex())
 			delete(node.children, child)
 		}
 	}
 	// If the node does not exist, it's a previously committed node.
 	node, ok := db.nodes[child]
 	if !ok {
+		logger.Info("Database.dereference -- returning since db.nodes[child] does not exist", "goid", common.GoId(), "child", child.Hex(), "parent", parent.Hex())
 		return
 	}
 	// If there are no more references to the child, delete it and cascade
@@ -735,6 +744,7 @@ func (db *Database) dereference(child common.Hash, parent common.Hash) {
 		for _, hash := range node.childs() {
 			db.dereference(hash, child)
 		}
+		logger.Info("Database.dereference -- deleting db.nodes[child]", "goid", common.GoId(), "child", child.Hex(), "parent", parent.Hex())
 		delete(db.nodes, child)
 		db.nodesSize -= common.StorageSize(common.HashLength + int(node.size))
 	}

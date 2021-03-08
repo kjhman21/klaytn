@@ -117,6 +117,7 @@ func (t *Trie) TryGet(key []byte) ([]byte, error) {
 }
 
 func (t *Trie) tryGet(origNode node, key []byte, pos int) (value []byte, newnode node, didResolve bool, err error) {
+	logger.Info("Trie.tryGet", "key", common.Bytes2Hex(key), "pos", pos)
 	switch n := (origNode).(type) {
 	case nil:
 		return nil, nil, false, nil
