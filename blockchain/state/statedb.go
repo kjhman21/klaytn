@@ -877,10 +877,12 @@ func (s *StateDB) Commit(deleteEmptyObjects bool) (root common.Hash, err error) 
 		acc := serializer.GetAccount()
 		if pa := account.GetProgramAccount(acc); pa != nil {
 			if pa.GetStorageRoot() != emptyState {
+				logger.Info("StateDB.Commit -- referencing storage root", "storageRoot", pa.GetStorageRoot().Hex(), "parent", parent.Hex())
 				s.db.TrieDB().Reference(pa.GetStorageRoot(), parent)
 			}
 			code := common.BytesToHash(pa.GetCodeHash())
 			if code != emptyCode {
+				logger.Info("StateDB.Commit -- referencing code", "code", code.Hex(), "parent", parent.Hex())
 				s.db.TrieDB().Reference(code, parent)
 			}
 		}
