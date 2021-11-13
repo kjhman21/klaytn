@@ -18,7 +18,9 @@ package tests
 
 import (
 	"crypto/ecdsa"
+	"encoding/json"
 	"fmt"
+	"github.com/klaytn/klaytn/rlp"
 	"math"
 	"math/big"
 	"strconv"
@@ -2188,6 +2190,182 @@ func TestRoleBasedKeyFeeDelegation(t *testing.T) {
 		}
 	}
 
+	if testing.Verbose() {
+		prof.PrintProfileInfo()
+	}
+}
+
+func TestColin(t *testing.T) {
+	//gasPrice := new(big.Int).SetUint64(25 * params.Ston)
+	gasPrice := big.NewInt(0)
+	gasLimit := uint64(1000000)
+
+	if testing.Verbose() {
+		enableLog()
+	}
+	prof := profile.NewProfiler()
+
+	// Initialize blockchain
+	start := time.Now()
+	bcdata, err := NewBCData(6, 4)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prof.Profile("main_init_blockchain", time.Now().Sub(start))
+	defer bcdata.Shutdown()
+
+	// Initialize address-balance map for verification
+	start = time.Now()
+	accountMap := NewAccountMap()
+	if err := accountMap.Initialize(bcdata); err != nil {
+		t.Fatal(err)
+	}
+	prof.Profile("main_init_accountMap", time.Now().Sub(start))
+
+	// reservoir account
+	//reservoir := &TestAccountType{
+	//	Addr:  *bcdata.addrs[0],
+	//	Keys:  []*ecdsa.PrivateKey{bcdata.privKeys[0]},
+	//	Nonce: uint64(0),
+	//}
+
+	signer := types.NewEIP155Signer(big.NewInt(8217))
+	{
+		privkey, err := crypto.ToECDSA(common.FromHex("0x3cb041196adccd10e3371a2c78187e5f6e2e7f3b621ce63c722b00c3f2447171"))
+		if err != nil {
+			fmt.Printf("crypto to ecdsa fail: %s", err)
+		}
+		addr := crypto.PubkeyToAddress(privkey.PublicKey)
+		acckey := accountkey.NewAccountKeySerializer()
+		rlp.DecodeBytes(common.FromHex("0x05f8f0b84e04f84b02f848e301a1027f7de95a473a7695f2a8cdba970be125de821e117316a0d5f8190432ba53b21ce301a1027836b869758219a9995bc2a670f7fba2d004fa777a4ef709c5bc62ca36111d5db84e04f84b01f848e301a1027f7de95a473a7695f2a8cdba970be125de821e117316a0d5f8190432ba53b21ce301a1027836b869758219a9995bc2a670f7fba2d004fa777a4ef709c5bc62ca36111d5db84e04f84b02f848e301a1027f7de95a473a7695f2a8cdba970be125de821e117316a0d5f8190432ba53b21ce301a1027836b869758219a9995bc2a670f7fba2d004fa777a4ef709c5bc62ca36111d5d"), acckey)
+		values := map[types.TxValueKeyType]interface{}{
+			types.TxValueKeyNonce:      uint64(0),
+			types.TxValueKeyFrom:       addr,
+			types.TxValueKeyGasLimit:   gasLimit,
+			types.TxValueKeyGasPrice:   gasPrice,
+			types.TxValueKeyAccountKey: acckey.GetKey(),
+		}
+		tx, err := types.NewTransactionWithMap(types.TxTypeAccountUpdate, values)
+		assert.Equal(t, nil, err)
+		fmt.Printf("tx addr %p\n", tx)
+
+		err = tx.SignWithKeys(signer, []*ecdsa.PrivateKey{bcdata.privKeys[1]})
+		assert.Equal(t, nil, err)
+
+		fmt.Println(tx)
+		fmt.Println(json.Marshal(tx))
+
+	}
+	return
+
+	var txs types.Transactions
+
+	// make TxPool to test validation in 'TxPool add' process
+	poolConfig := blockchain.DefaultTxPoolConfig
+	poolConfig.ExecSlotsAll = 1
+	poolConfig.ExecSlotsAccount = 1
+	poolConfig.NonExecSlotsAll = 1
+	poolConfig.NonExecSlotsAccount = 1
+	txpool := blockchain.NewTxPool(poolConfig, bcdata.bc.Config(), bcdata.bc)
+
+	{
+		addr := *bcdata.addrs[1]
+		feepayer := *bcdata.addrs[2]
+		acckey := accountkey.NewAccountKeySerializer()
+		rlp.DecodeBytes(common.FromHex("0x05f8f0b84e04f84b02f848e301a1027f7de95a473a7695f2a8cdba970be125de821e117316a0d5f8190432ba53b21ce301a1027836b869758219a9995bc2a670f7fba2d004fa777a4ef709c5bc62ca36111d5db84e04f84b01f848e301a1027f7de95a473a7695f2a8cdba970be125de821e117316a0d5f8190432ba53b21ce301a1027836b869758219a9995bc2a670f7fba2d004fa777a4ef709c5bc62ca36111d5db84e04f84b02f848e301a1027f7de95a473a7695f2a8cdba970be125de821e117316a0d5f8190432ba53b21ce301a1027836b869758219a9995bc2a670f7fba2d004fa777a4ef709c5bc62ca36111d5d"), acckey)
+		values := map[types.TxValueKeyType]interface{}{
+			types.TxValueKeyNonce:      uint64(1),
+			types.TxValueKeyFrom:       addr,
+			types.TxValueKeyGasLimit:   gasLimit,
+			types.TxValueKeyGasPrice:   gasPrice,
+			types.TxValueKeyAccountKey: acckey.GetKey(),
+			types.TxValueKeyFeePayer: feepayer,
+		}
+		tx, err := types.NewTransactionWithMap(types.TxTypeFeeDelegatedAccountUpdate, values)
+		assert.Equal(t, nil, err)
+		fmt.Printf("tx addr %p\n", tx)
+
+		err = tx.SignWithKeys(signer, []*ecdsa.PrivateKey{bcdata.privKeys[1]})
+		assert.Equal(t, nil, err)
+
+		err = tx.SignFeePayerWithKeys(signer, []*ecdsa.PrivateKey{bcdata.privKeys[2]})
+		assert.Equal(t, nil, err)
+
+		txs = append(txs, tx)
+		txpool.AddRemote(tx)
+	}
+	{
+		addr := *bcdata.addrs[1]
+		feepayer := *bcdata.addrs[2]
+		acckey := accountkey.NewAccountKeySerializer()
+		rlp.DecodeBytes(common.FromHex("0x05f8f0b84e04f84b02f848e301a1027f7de95a473a7695f2a8cdba970be125de821e117316a0d5f8190432ba53b21ce301a1027836b869758219a9995bc2a670f7fba2d004fa777a4ef709c5bc62ca36111d5db84e04f84b01f848e301a1027f7de95a473a7695f2a8cdba970be125de821e117316a0d5f8190432ba53b21ce301a1027836b869758219a9995bc2a670f7fba2d004fa777a4ef709c5bc62ca36111d5db84e04f84b02f848e301a1027f7de95a473a7695f2a8cdba970be125de821e117316a0d5f8190432ba53b21ce301a1027836b869758219a9995bc2a670f7fba2d004fa777a4ef709c5bc62ca36111d5d"), acckey)
+		values := map[types.TxValueKeyType]interface{}{
+			types.TxValueKeyNonce:      uint64(2),
+			types.TxValueKeyFrom:       addr,
+			types.TxValueKeyGasLimit:   gasLimit,
+			types.TxValueKeyGasPrice:   gasPrice,
+			types.TxValueKeyAccountKey: acckey.GetKey(),
+			types.TxValueKeyFeePayer: feepayer,
+		}
+		tx, err := types.NewTransactionWithMap(types.TxTypeFeeDelegatedAccountUpdate, values)
+		assert.Equal(t, nil, err)
+		fmt.Printf("tx addr %p\n", tx)
+
+		err = tx.SignWithKeys(signer, []*ecdsa.PrivateKey{bcdata.privKeys[1]})
+		assert.Equal(t, nil, err)
+
+		err = tx.SignFeePayerWithKeys(signer, []*ecdsa.PrivateKey{bcdata.privKeys[2]})
+		assert.Equal(t, nil, err)
+
+		txs = append(txs, tx)
+		txpool.AddRemote(tx)
+	}
+	//update the account's key
+	{
+		addr := *bcdata.addrs[1]
+		acckey := accountkey.NewAccountKeySerializer()
+		feepayer := *bcdata.addrs[2]
+		rlp.DecodeBytes(common.FromHex("0x05f8f0b84e04f84b02f848e301a1027f7de95a473a7695f2a8cdba970be125de821e117316a0d5f8190432ba53b21ce301a1035eaf7ed2b7329e1301b300e63de3f8424ce6fffd206c6df8a5022e59c9bad704b84e04f84b01f848e301a1027f7de95a473a7695f2a8cdba970be125de821e117316a0d5f8190432ba53b21ce301a1035eaf7ed2b7329e1301b300e63de3f8424ce6fffd206c6df8a5022e59c9bad704b84e04f84b02f848e301a1027f7de95a473a7695f2a8cdba970be125de821e117316a0d5f8190432ba53b21ce301a1035eaf7ed2b7329e1301b300e63de3f8424ce6fffd206c6df8a5022e59c9bad704"), acckey)
+		values := map[types.TxValueKeyType]interface{}{
+			types.TxValueKeyNonce:      accountMap.GetNonce(addr),
+			types.TxValueKeyFrom:       addr,
+			types.TxValueKeyGasLimit:   gasLimit,
+			types.TxValueKeyGasPrice:   gasPrice,
+			types.TxValueKeyAccountKey: acckey.GetKey(),
+			types.TxValueKeyFeePayer: feepayer,
+		}
+		tx, err := types.NewTransactionWithMap(types.TxTypeFeeDelegatedAccountUpdate, values)
+		assert.Equal(t, nil, err)
+		fmt.Printf("tx addr %p\n", tx)
+
+		err = tx.SignWithKeys(signer, []*ecdsa.PrivateKey{bcdata.privKeys[2]})
+		assert.Equal(t, nil, err)
+
+		err = tx.SignFeePayerWithKeys(signer, []*ecdsa.PrivateKey{bcdata.privKeys[2]})
+		assert.Equal(t, nil, err)
+
+		//blockchain.SetPubKey([]*ecdsa.PublicKey{&bcdata.privKeys[1].PublicKey})
+
+		//txs = append(txs, tx)
+		txpool.AddRemote(tx)
+	}
+	// Generate the first block!
+	fmt.Println(txpool.Content())
+	time.Sleep(1000)
+	//pending, err := txpool.Pending()
+	//if err != nil {
+	//	fmt.Println("pending err", err)
+	//}
+	//txsMap := types.NewTransactionsByPriceAndNonce(signer, pending).Txs()
+	//for _, tx := range txsMap {
+	//	txs = append(txs, tx...)
+	//}
+	fmt.Println("transactions", txs)
+	if err := bcdata.GenABlockWithTransactions(accountMap, txs, prof); err != nil {
+		t.Fatal(err)
+	}
+
+	// select account key types to be tested
 	if testing.Verbose() {
 		prof.PrintProfileInfo()
 	}

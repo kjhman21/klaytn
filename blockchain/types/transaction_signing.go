@@ -190,6 +190,22 @@ func SenderPubkey(signer Signer, tx *Transaction) ([]*ecdsa.PublicKey, error) {
 	return pubkey, nil
 }
 
+func SenderPubkeyOverride(signer Signer, tx *Transaction, testPubKey []*ecdsa.PublicKey) ([]*ecdsa.PublicKey, error) {
+	if sc := tx.from.Load(); sc != nil {
+		sigCache := sc.(sigCachePubkey)
+		// If the signer used to derive from in a previous
+		// call is not the same as used current, invalidate
+		// the cache.
+		if sigCache.signer.Equal(signer) {
+			return sigCache.pubkey, nil
+		}
+	}
+
+	pubkey := testPubKey
+	tx.from.Store(sigCachePubkey{signer: signer, pubkey: pubkey})
+	return pubkey, nil
+}
+
 // Signer encapsulates transaction signature handling. Note that this interface is not a
 // stable API and may change at any time to accommodate new protocol rules.
 type Signer interface {

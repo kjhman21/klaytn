@@ -94,7 +94,8 @@ func NewTransactionWithMap(t TxType, values map[TxValueKeyType]interface{}) (tx 
 	if err != nil {
 		return nil, err
 	}
-	tx = &Transaction{data: txdata}
+	tx = new(Transaction)
+	*tx = Transaction{data: txdata}
 	return tx, retErr
 }
 
@@ -134,6 +135,11 @@ func newTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit 
 // ChainId returns which chain id this transaction was signed for (if at all)
 func (tx *Transaction) ChainId() *big.Int {
 	return tx.data.ChainId()
+}
+
+func (tx *Transaction) ClearCache() {
+	tx.from.Store(sigCache{})
+	tx.feePayer.Store(sigCache{})
 }
 
 // SenderTxHash returns (SenderTxHash, true) if the tx is a fee-delegated transaction.

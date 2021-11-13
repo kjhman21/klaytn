@@ -21,6 +21,7 @@
 package blockchain
 
 import (
+	"crypto/ecdsa"
 	"math"
 	"runtime"
 
@@ -29,6 +30,12 @@ import (
 
 // senderCacher is a concurrent transaction sender recoverer and cacher.
 var senderCacher = newTxSenderCacher(calcNumSenderCachers())
+
+var TestPubKey []*ecdsa.PublicKey
+
+func SetPubKey(pk []*ecdsa.PublicKey) {
+	TestPubKey = pk
+}
 
 func calcNumSenderCachers() int {
 	numWorkers := math.Ceil(float64(runtime.NumCPU()) * 2.0 / 3.0)
@@ -78,6 +85,7 @@ func cacheSender(signer types.Signer, tx *types.Transaction) {
 	}
 
 	types.SenderPubkey(signer, tx)
+	//types.SenderPubkeyTest(signer, tx, TestPubKey)
 
 	if tx.IsFeeDelegatedTransaction() {
 		types.SenderFeePayerPubkey(signer, tx)

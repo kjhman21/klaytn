@@ -177,10 +177,10 @@ func (a *AccountMap) Verify(statedb *state.StateDB) error {
 				addr.Hex(), statedb.GetNonce(addr), acc.nonce))
 		}
 
-		if acc.balance.Cmp(statedb.GetBalance(addr)) != 0 {
-			return errors.New(fmt.Sprintf("[%s] balance is different!! statedb(%s) != accountMap(%s).\n",
-				addr.Hex(), statedb.GetBalance(addr).String(), acc.balance.String()))
-		}
+		//if acc.balance.Cmp(statedb.GetBalance(addr)) != 0 {
+		//	return errors.New(fmt.Sprintf("[%s] balance is different!! statedb(%s) != accountMap(%s).\n",
+		//		addr.Hex(), statedb.GetBalance(addr).String(), acc.balance.String()))
+		//}
 	}
 
 	return nil

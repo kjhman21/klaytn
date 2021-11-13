@@ -1032,6 +1032,7 @@ func handleTxMsg(pm *ProtocolManager, p Peer, msg p2p.Msg) error {
 			continue
 		}
 		p.AddToKnownTxs(tx.Hash())
+		//tx.ClearCache()
 		validTxs = append(validTxs, tx)
 		txReceiveCounter.Inc(1)
 	}
