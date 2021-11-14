@@ -138,8 +138,8 @@ func (tx *Transaction) ChainId() *big.Int {
 }
 
 func (tx *Transaction) ClearCache() {
-	tx.from.Store(sigCache{})
-	tx.feePayer.Store(sigCache{})
+	tx.from = atomic.Value{}
+	tx.feePayer = atomic.Value{}
 }
 
 // SenderTxHash returns (SenderTxHash, true) if the tx is a fee-delegated transaction.
@@ -598,6 +598,7 @@ func (tx *Transaction) ValidateSender(signer Signer, p AccountKeyPicker, current
 	}
 
 	pubkey, err := SenderPubkey(signer, tx)
+	logger.Error("sender pubkey", "pubkey", pubkey, "addr", crypto.PubkeyToAddress(*pubkey[0]))
 	if err != nil {
 		return 0, err
 	}

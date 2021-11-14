@@ -645,6 +645,7 @@ func (pool *TxPool) validateTx(tx *types.Transaction) error {
 		 return err
 	}
 	from := tx.ValidatedSender()
+	logger.Error("ValidatedSender", "from", from.String())
 
 	// Ensure the transaction adheres to nonce ordering
 	if pool.getNonce(from) > tx.Nonce() {
