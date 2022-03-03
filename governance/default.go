@@ -950,6 +950,7 @@ func (gov *Governance) ReadGovernanceState() {
 		logger.Info("No governance state found in a database")
 		return
 	}
+	logger.Info("governance state", "json", string(b))
 	gov.UnmarshalJSON(b)
 	gov.updateGovernanceParams()
 
