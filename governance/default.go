@@ -723,7 +723,7 @@ func (g *Governance) ReadGovernance(num uint64) (uint64, map[string]interface{},
 	if gBlockNum, ok := g.searchCache(blockNum); ok {
 		if data, okay := g.getGovernanceCache(gBlockNum); okay {
 			b, _ := json.Marshal(data)
-			logger.Info("Governance.ReadGovernance from cache", "json", string(b))
+			logger.Info("Governance.ReadGovernance from cache", "num", num, "json", string(b))
 			return gBlockNum, data, nil
 		}
 	}
@@ -731,7 +731,7 @@ func (g *Governance) ReadGovernance(num uint64) (uint64, map[string]interface{},
 		bn, result, err := g.db.ReadGovernanceAtNumber(num, g.Epoch())
 		result = adjustDecodedSet(result)
 		b, _ := json.Marshal(result)
-		logger.Info("Governance.ReadGovernance from db", "json", string(b))
+		logger.Info("Governance.ReadGovernance from db", "num", num, "json", string(b))
 		return bn, result, err
 	} else {
 		// For CI tests which don't have a database
