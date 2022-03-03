@@ -1990,6 +1990,7 @@ func (dbm *databaseManager) ReadCliqueSnapshot(snapshotBlockHash common.Hash) ([
 func (dbm *databaseManager) WriteGovernance(data map[string]interface{}, num uint64) error {
 	db := dbm.getDatabase(MiscDB)
 	b, err := json.Marshal(data)
+	logger.Info("databaseManager.WriteGovernance", "json", string(b))
 	if err != nil {
 		return err
 	}
