@@ -684,6 +684,8 @@ func (g *Governance) initializeCache() error {
 	if err != nil {
 		return err
 	}
+	b, _ := json.Marshal(newGovernanceSet)
+	logger.Info("Governance.initializeCache", "headBlockNumber", headBlockNumber, "newBlockNumber", newBlockNumber, "newGovernanceSet", string(b))
 	// g.actualGovernanceBlock and currentSet is set
 	g.actualGovernanceBlock.Store(newBlockNumber)
 	g.currentSet.Import(newGovernanceSet)
