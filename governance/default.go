@@ -939,6 +939,7 @@ func (gov *Governance) WriteGovernanceState(num uint64, isCheckpoint bool) error
 		logger.Error("Error in marshaling governance state", "err", err)
 		return err
 	} else {
+		logger.Info("Governance.WriteGovernanceState: writing governance state", "state", string(b))
 		if err = gov.db.WriteGovernanceState(b); err != nil {
 			logger.Error("Error in writing governance state", "err", err)
 			return err
