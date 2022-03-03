@@ -480,6 +480,7 @@ func (pool *TxPool) GasPrice() *big.Int {
 
 // SetGasPrice updates the gas price of the transaction pool for new transactions, and drops all old transactions.
 func (pool *TxPool) SetGasPrice(price *big.Int) {
+	logger.Info("TxPool.SetGasPrice", "pool.gasPrice", pool.gasPrice.String(), "price", price.String())
 	if pool.gasPrice.Cmp(price) != 0 {
 		pool.mu.Lock()
 

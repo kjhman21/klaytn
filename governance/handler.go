@@ -72,6 +72,7 @@ func updateTxGasHumanReadable(g *Governance, k string, v interface{}) {
 
 func updateUnitPrice(g *Governance, k string, v interface{}) {
 	newPrice := v.(uint64)
+	logger.Info("updateUnitPrice", "g.txPool", g.TxPool)
 	if g.TxPool != nil {
 		g.TxPool.SetGasPrice(big.NewInt(0).SetUint64(newPrice))
 	}
