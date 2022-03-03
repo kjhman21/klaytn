@@ -621,10 +621,15 @@ func (g *Governance) initializeCache() error {
 	}
 	g.idxCache = indices
 
+	b, _ := json.Marshal(indices)
+	logger.Info("Governance.initializeCache", "indices", string(b))
+
 	// Put governance items into the itemCache
 	for _, v := range indices {
 		if data, err := g.db.ReadGovernance(v); err == nil {
 			data = adjustDecodedSet(data)
+			b, _ := json.Marshal(data)
+			logger.Info("Governance.initializeCache in for loop", "v", v, "data", string(b))
 			g.itemCache.Add(getGovernanceCacheKey(v), data)
 			g.actualGovernanceBlock.Store(v)
 		} else {
