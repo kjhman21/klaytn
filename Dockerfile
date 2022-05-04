@@ -20,7 +20,7 @@ ENV KLAYTN_DISABLE_SYMBOL=$KLAYTN_DISABLE_SYMBOL
 ADD . $SRC_DIR
 RUN cd $SRC_DIR && make all
 
-FROM alpine:3
+FROM --platform=linux/amd64 alpine:3
 ARG SRC_DIR
 ARG PKG_DIR
 
