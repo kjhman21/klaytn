@@ -342,13 +342,7 @@ contract PublicDelegation is IPublicDelegation, PublicDelegationStorage, ERC20, 
         ICnStakingV3MultiSig cnMultisig = ICnStakingV3MultiSig(address(baseCnStakingV3));
 
         cnMultisig.submitApproveStakingWithdrawal(_recipient, _assets);
-        uint256 lastId = 0;
-        if(userRequestIds[_owner].length > 0) {
-            lastId = userRequestIds[_owner][userRequestIds[_owner].length-1];
-        }
-        uint256[] memory ids = cnMultisig.getRequestIds(lastId, 0, ICnStakingV3MultiSig.RequestState.Executed);
-        require(ids.length > 0, "ids.length should be larger than 0.");
-        uint256 id = ids[ids.length-1];
+        uint256 id = baseCnStakingV3.withdrawalRequestCount() - 1;
         userRequestIds[_owner].push(id);
         requestIdToOwner[id] = _owner;
 
