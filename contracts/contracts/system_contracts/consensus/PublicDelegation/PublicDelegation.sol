@@ -19,6 +19,7 @@ pragma solidity 0.8.25;
 
 import "../../../libs/ValidContract.sol";
 import "../CnV3/ICnStakingV3.sol";
+import "../CnV3/ICnStakingV3MultiSig.sol";
 import "./IPublicDelegation.sol";
 import "./PublicDelegationStorage.sol";
 import "openzeppelin-contracts-5.0/access/Ownable.sol";
@@ -100,6 +101,16 @@ contract PublicDelegation is IPublicDelegation, PublicDelegationStorage, ERC20, 
         commissionTo = _commissionTo;
 
         emit UpdateCommissionTo(_prevCommissionTo, _commissionTo);
+    }
+
+    /// @dev Finish updating the reward address
+    /// Must be called from either the pendingRewardAddress, or one of the AddressBook admins.
+    /// This step guarantees that the rewardAddress is owned by the current CN.
+    ///
+    /// Emits an AcceptRewardAddress event.
+    /// Also emits a ReviseRewardAddress event from the AddressBook.
+    function acceptRewardAddress() external onlyOwner {
+        baseCnStakingV3.acceptRewardAddress(address(this));
     }
 
     /// @dev Update the commission rate.
@@ -263,7 +274,7 @@ contract PublicDelegation is IPublicDelegation, PublicDelegationStorage, ERC20, 
     function _update(address _from, address _to, uint256 _value) internal override {
         /// @dev Since _transfer already filters the below condition,
         /// it can prevent the transfer between the addresses except for the mint and burn.
-        require(_from == address(0) || _to == address(0), "Transfer not allowed.");
+        // require(_from == address(0) || _to == address(0), "Transfer not allowed.");
 
         super._update(_from, _to, _value);
     }
@@ -328,11 +339,20 @@ contract PublicDelegation is IPublicDelegation, PublicDelegationStorage, ERC20, 
     function _requestWithdrawal(address _owner, address _recipient, uint256 _assets) private {
         require(_assets > 0, "Withdrawal amount is too low.");
 
-        uint256 _id = baseCnStakingV3.approveStakingWithdrawal(_recipient, _assets);
-        userRequestIds[_owner].push(_id);
-        requestIdToOwner[_id] = _owner;
+        ICnStakingV3MultiSig cnMultisig = ICnStakingV3MultiSig(address(baseCnStakingV3));
 
-        emit RequestWithdrawal(_owner, _recipient, _id, _assets);
+        cnMultisig.submitApproveStakingWithdrawal(_recipient, _assets);
+        uint256 lastId = 0;
+        if(userRequestIds[_owner].length > 0) {
+            lastId = userRequestIds[_owner][userRequestIds[_owner].length-1];
+        }
+        uint256[] memory ids = cnMultisig.getRequestIds(lastId, 0, ICnStakingV3MultiSig.RequestState.Executed);
+        require(ids.length > 0, "ids.length should be larger than 0.");
+        uint256 id = ids[ids.length-1];
+        userRequestIds[_owner].push(id);
+        requestIdToOwner[id] = _owner;
+
+        emit RequestWithdrawal(_owner, _recipient, id, _assets);
     }
 
     /// @dev Cancel the approved staking withdrawal.
@@ -344,7 +364,7 @@ contract PublicDelegation is IPublicDelegation, PublicDelegationStorage, ERC20, 
         uint256 _shares = previewDeposit(_assets);
         _mint(_msgSender(), _shares);
 
-        baseCnStakingV3.cancelApprovedStakingWithdrawal(_id);
+        ICnStakingV3MultiSig(address(baseCnStakingV3)).submitCancelApprovedStakingWithdrawal(_id);
 
         emit RequestCancelWithdrawal(_msgSender(), _id);
     }
